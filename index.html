@@ -1,0 +1,788 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>電脳宝箱イベント</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@400;500;700;900&family=Orbitron:wght@500;700;900&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg-deep: #090c14;
+    --bg-panel: #10141f;
+    --bg-panel-2: #0c1019;
+    --grid-line: rgba(77,216,230,0.10);
+    --cyan: #4dd8e6;
+    --cyan-bright: #8ff2ff;
+    --gold: #e8a63c;
+    --gold-bright: #ffcc66;
+    --magenta: #ff5da2;
+    --ink: #dff3f5;
+    --muted: #6f8b93;
+    --panel-border: rgba(77,216,230,0.28);
+    --shadow: rgba(0,0,0,0.55);
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    min-height:100vh;
+    font-family:'Zen Maru Gothic', sans-serif;
+    color:var(--ink);
+    background:
+      radial-gradient(circle at 20% 10%, rgba(77,216,230,0.10), transparent 45%),
+      radial-gradient(circle at 85% 85%, rgba(255,204,102,0.08), transparent 45%),
+      repeating-linear-gradient(0deg, var(--grid-line) 0 1px, transparent 1px 34px),
+      repeating-linear-gradient(90deg, var(--grid-line) 0 1px, transparent 1px 34px),
+      var(--bg-deep);
+    background-attachment:fixed;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:24px;
+    position:relative;
+    overflow-x:hidden;
+  }
+  /* film grain */
+  body::before{
+    content:"";
+    position:fixed;
+    inset:0;
+    pointer-events:none;
+    opacity:0.04;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    z-index:1000;
+  }
+  .stage{
+    width:100%;
+    max-width:560px;
+    background:linear-gradient(180deg, var(--bg-panel) 0%, var(--bg-panel-2) 100%);
+    border:1px solid var(--panel-border);
+    border-radius:16px;
+    box-shadow:0 24px 60px var(--shadow), 0 0 50px rgba(77,216,230,0.10), inset 0 0 0 1px rgba(255,255,255,0.02);
+    padding:32px 28px 28px;
+    position:relative;
+    overflow:hidden;
+  }
+  header{text-align:center;margin-bottom:20px;}
+  .eyebrow{
+    font-family:'Orbitron','Zen Maru Gothic',sans-serif;
+    font-size:11px;
+    letter-spacing:0.3em;
+    color:var(--cyan);
+    font-weight:700;
+    display:block;
+    margin-bottom:8px;
+    text-shadow:0 0 10px rgba(77,216,230,0.6);
+  }
+  h1{
+    font-size:26px;
+    font-weight:900;
+    margin:0 0 6px;
+    color:var(--gold-bright);
+    text-shadow:0 0 16px rgba(255,204,102,0.35);
+  }
+  .sub{
+    font-size:13px;
+    color:var(--muted);
+    margin:0;
+  }
+  .progress-wrap{
+    margin:20px 0 6px;
+    background:rgba(77,216,230,0.10);
+    border:1px solid rgba(77,216,230,0.2);
+    border-radius:999px;
+    height:10px;
+    overflow:hidden;
+  }
+  .progress-bar{
+    height:100%;
+    background:linear-gradient(90deg, var(--cyan), var(--gold-bright));
+    width:0%;
+    transition:width 0.6s ease;
+    box-shadow:0 0 10px rgba(77,216,230,0.6);
+  }
+  .progress-label{
+    font-family:'Orbitron','Zen Maru Gothic',sans-serif;
+    font-size:11px;
+    color:var(--muted);
+    text-align:right;
+    margin-bottom:16px;
+  }
+
+  /* --- ID entry screen --- */
+  #screen-entry .id-form{
+    display:flex;
+    flex-direction:column;
+    gap:12px;
+    margin-top:8px;
+  }
+  #screen-entry label{
+    font-size:13px;
+    font-weight:700;
+    color:var(--cyan);
+  }
+  #screen-entry .id-hint{
+    font-size:11px;
+    color:var(--muted);
+    margin:-8px 0 0;
+  }
+  #screen-entry input{
+    font-family:'Orbitron','Zen Maru Gothic',sans-serif;
+    padding:12px 14px;
+    border-radius:10px;
+    border:1.5px solid var(--panel-border);
+    background:#080b12;
+    color:var(--cyan-bright);
+    font-size:15px;
+    letter-spacing:0.04em;
+    outline:none;
+  }
+  #screen-entry input::placeholder{color:#3f5b60;}
+  #screen-entry input:focus{border-color:var(--cyan);box-shadow:0 0 0 3px rgba(77,216,230,0.15);}
+  .btn{
+    font-family:inherit;
+    font-weight:700;
+    font-size:15px;
+    padding:13px 18px;
+    border-radius:12px;
+    border:1.5px solid #a97a24;
+    cursor:pointer;
+    background:linear-gradient(180deg, var(--gold-bright), var(--gold));
+    color:#2c1c05;
+    box-shadow:0 6px 14px rgba(232,166,60,0.3), 0 0 0 1px rgba(77,216,230,0.15);
+    transition:transform 0.15s ease, box-shadow 0.15s ease;
+  }
+  .btn:hover{transform:translateY(-2px);box-shadow:0 9px 18px rgba(232,166,60,0.4), 0 0 14px rgba(77,216,230,0.3);}
+  .btn:disabled{opacity:0.45;cursor:not-allowed;transform:none;box-shadow:none;}
+  .btn.ghost{
+    background:transparent;
+    color:var(--cyan);
+    border:1.5px solid var(--cyan);
+    box-shadow:none;
+  }
+  .btn-open-chest{
+    display:block;
+    width:100%;
+    margin-top:10px;
+    font-size:19px;
+    font-weight:900;
+    padding:20px 18px;
+    border-radius:14px;
+    border:2px solid rgba(77,216,230,0.5);
+    background:linear-gradient(180deg, var(--gold-bright), var(--gold));
+    color:#2c1c05;
+    letter-spacing:0.03em;
+    box-shadow:0 8px 0 #a97a24, 0 14px 24px rgba(232,166,60,0.35), 0 0 20px rgba(77,216,230,0.25);
+    cursor:pointer;
+    font-family:inherit;
+    animation:chestBtnPulse 1.6s ease-in-out infinite;
+  }
+  .btn-open-chest:hover{transform:translateY(-2px);}
+  .btn-open-chest:active{transform:translateY(4px);box-shadow:0 4px 0 #a97a24, 0 8px 16px rgba(232,166,60,0.3);}
+  @keyframes chestBtnPulse{
+    0%,100%{box-shadow:0 8px 0 #a97a24, 0 14px 24px rgba(232,166,60,0.35), 0 0 16px rgba(77,216,230,0.2);}
+    50%{box-shadow:0 8px 0 #a97a24, 0 14px 30px rgba(255,204,102,0.6), 0 0 0 6px rgba(77,216,230,0.15), 0 0 26px rgba(77,216,230,0.4);}
+  }
+
+  /* --- Grid screen --- */
+  .grid{
+    display:grid;
+    grid-template-columns:repeat(5, 1fr);
+    gap:10px;
+    margin:18px 0 10px;
+  }
+  .box{
+    aspect-ratio:1/1;
+    border-radius:8px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-family:'Orbitron','Zen Maru Gothic',sans-serif;
+    font-weight:700;
+    font-size:20px;
+    cursor:pointer;
+    position:relative;
+    background:#0d1119;
+    color:var(--cyan-bright);
+    border:1.5px solid rgba(77,216,230,0.3);
+    transition:transform 0.15s ease, background 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+    user-select:none;
+  }
+  .box:hover:not(.taken):not(.mine){
+    transform:translateY(-2px);
+    border-color:var(--cyan);
+    box-shadow:0 0 14px rgba(77,216,230,0.35);
+  }
+  .box.taken{
+    background:#161b24;
+    color:#42555c;
+    border-color:rgba(77,216,230,0.1);
+    cursor:not-allowed;
+    font-size:18px;
+  }
+  .box.mine{
+    background:rgba(255,204,102,0.12);
+    color:var(--gold-bright);
+    border-color:var(--gold-bright);
+    border-width:2px;
+    font-size:18px;
+    box-shadow:0 0 14px rgba(255,204,102,0.3);
+  }
+  .box .num{font-size:inherit;}
+
+  .status-msg{
+    text-align:center;
+    font-size:13px;
+    color:var(--muted);
+    min-height:18px;
+    margin-bottom:6px;
+  }
+  .discord-tag{
+    font-family:'Orbitron','Zen Maru Gothic',sans-serif;
+    text-align:center;
+    font-size:12px;
+    color:var(--cyan);
+    font-weight:700;
+    margin-bottom:2px;
+  }
+
+  /* --- Reveal screen --- */
+  #screen-reveal{text-align:center;}
+  .chest-wrap{
+    position:relative;
+    width:230px;
+    height:200px;
+    margin:28px auto 16px;
+    perspective:700px;
+  }
+  .chest-glow{
+    position:absolute;
+    inset:-34px;
+    border-radius:50%;
+    background:
+      radial-gradient(circle at 35% 40%, rgba(255,204,102,0.45), transparent 55%),
+      radial-gradient(circle at 65% 60%, rgba(77,216,230,0.4), transparent 60%);
+    opacity:0;
+    z-index:0;
+    pointer-events:none;
+  }
+  .chest-glow.show{ animation:chestGlowPulse 1.4s ease-in-out infinite; }
+  @keyframes chestGlowPulse{
+    0%,100%{opacity:0.2; transform:scale(0.9);}
+    50%{opacity:0.65; transform:scale(1.12);}
+  }
+  .chest-base{
+    position:absolute;
+    bottom:0;
+    left:50%;
+    transform:translateX(-50%);
+    width:196px;
+    height:108px;
+    background:
+      repeating-linear-gradient(90deg, rgba(0,0,0,0.10) 0 2px, transparent 2px 26px),
+      linear-gradient(160deg, #9c6a35, #6b4423 70%, #543116);
+    border:3px solid #3d2410;
+    border-radius:8px;
+    box-shadow:0 12px 24px rgba(0,0,0,0.3), inset 0 0 0 3px rgba(0,0,0,0.15);
+    z-index:1;
+  }
+  .chest-band{
+    position:absolute;
+    left:-4px;
+    right:-4px;
+    height:16px;
+    background-image:
+      radial-gradient(circle, rgba(45,28,10,0.6) 2.2px, transparent 2.8px),
+      linear-gradient(180deg, #f3dda0, #c79239 55%, #8a6423);
+    background-size:24px 100%, 100% 100%;
+    background-position:12px center, 0 0;
+    background-repeat:repeat-x, no-repeat;
+    box-shadow:0 1px 0 rgba(255,255,255,0.35) inset, 0 -2px 3px rgba(0,0,0,0.25) inset;
+  }
+  .chest-band::before{
+    content:"";
+    position:absolute;
+    top:-2px; left:0; right:0;
+    height:2px;
+    background:var(--cyan);
+    box-shadow:0 0 8px rgba(77,216,230,0.8);
+    opacity:0.75;
+  }
+  .chest-band-top{ top:10px; }
+  .chest-band-bottom{ bottom:18px; }
+  .chest-lid{
+    position:absolute;
+    top:-4px;
+    left:50%;
+    width:206px;
+    height:100px;
+    transform:translateX(-50%) rotateX(0deg);
+    transform-origin:bottom center;
+    background:
+      repeating-linear-gradient(90deg, rgba(0,0,0,0.10) 0 2px, transparent 2px 26px),
+      linear-gradient(160deg, #b4793c, #7a4f26 70%, #5e3c1c);
+    border:3px solid #3d2410;
+    border-radius:60% 60% 8px 8px / 75% 75% 8px 8px;
+    box-shadow:0 6px 14px rgba(0,0,0,0.25);
+    transition:transform 2.4s cubic-bezier(.32,1.1,.6,1);
+    z-index:3;
+  }
+  .chest-lid::after{
+    content:"";
+    position:absolute;
+    left:-3px; right:-3px;
+    bottom:8px;
+    height:14px;
+    background-image:
+      radial-gradient(circle, rgba(45,28,10,0.6) 2.2px, transparent 2.8px),
+      linear-gradient(180deg, #f3dda0, #c79239 55%, #8a6423);
+    background-size:24px 100%, 100% 100%;
+    background-position:12px center, 0 0;
+    background-repeat:repeat-x, no-repeat;
+    border-radius:0 0 6px 6px;
+  }
+  .chest-wrap.shaking .chest-base,
+  .chest-wrap.shaking .chest-lid{
+    animation:chestShake 0.45s ease-in-out infinite;
+  }
+  @keyframes chestShake{
+    0%,100%{ filter:brightness(1); }
+    25%{ transform:translateX(calc(-50% - 2px)) rotate(-1deg); }
+    50%{ filter:brightness(1.05); }
+    75%{ transform:translateX(calc(-50% + 2px)) rotate(1deg); }
+  }
+  .chest-lock{
+    position:absolute;
+    top:56%;
+    left:50%;
+    transform:translate(-50%,-50%);
+    width:46px;
+    height:46px;
+    clip-path:polygon(25% 4%, 75% 4%, 100% 50%, 75% 96%, 25% 96%, 0% 50%);
+    background:linear-gradient(160deg, #ffe9b0, #cf9d3e 55%, #8a6423);
+    box-shadow:0 4px 10px rgba(0,0,0,0.4), 0 0 16px rgba(77,216,230,0.35);
+    z-index:4;
+    overflow:hidden;
+    transition:opacity 0.4s ease, transform 0.4s ease;
+  }
+  .chest-lock::before{
+    content:"";
+    position:absolute;
+    inset:0;
+    background:linear-gradient(180deg, transparent 0%, rgba(77,216,230,0.65) 50%, transparent 100%);
+    background-size:100% 220%;
+    animation:lockScan 2.4s linear infinite;
+    mix-blend-mode:screen;
+  }
+  @keyframes lockScan{
+    0%{background-position:0 -120%;}
+    100%{background-position:0 120%;}
+  }
+  .keyhole{
+    position:absolute;
+    top:50%;
+    left:50%;
+    transform:translate(-50%,-50%);
+    width:14px;
+    height:20px;
+    z-index:1;
+  }
+  .keyhole::before{
+    content:"";
+    position:absolute;
+    top:0; left:50%;
+    transform:translateX(-50%);
+    width:11px;
+    height:11px;
+    border-radius:50%;
+    background:#3d2410;
+  }
+  .keyhole::after{
+    content:"";
+    position:absolute;
+    top:8px; left:50%;
+    transform:translateX(-50%);
+    width:6px;
+    height:13px;
+    background:#3d2410;
+    clip-path:polygon(50% 0%, 100% 100%, 0% 100%);
+  }
+  .chest-lid.open ~ .chest-lock{opacity:0; transform:translate(-50%,-50%) scale(0.5) rotate(-18deg);}
+  .chest-lid.open{
+    transform:translateX(-50%) rotateX(-118deg) translateY(4px);
+  }
+
+  .burst{
+    position:absolute;
+    top:14px;
+    left:50%;
+    transform:translateX(-50%);
+    font-size:40px;
+    opacity:0;
+    z-index:2;
+  }
+  .burst.show{
+    animation:burstUp 1.6s ease-out forwards;
+  }
+  @keyframes burstUp{
+    0%{opacity:0; transform:translate(-50%,10px) scale(0.4);}
+    35%{opacity:1; transform:translate(-50%,-30px) scale(1.15);}
+    100%{opacity:0; transform:translate(-50%,-80px) scale(1);}
+  }
+  .sparkle{
+    position:absolute;
+    font-size:17px;
+    opacity:0;
+    pointer-events:none;
+  }
+  .sparkle.show{animation:sparkleFly 1.5s ease-out forwards;}
+  @keyframes sparkleFly{
+    0%{opacity:0; transform:translate(0,0) scale(0.5) rotate(0deg);}
+    20%{opacity:1;}
+    100%{opacity:0; transform:var(--fly) scale(1.2) rotate(180deg);}
+  }
+
+  .result-title{
+    font-size:22px;
+    font-weight:900;
+    margin:14px 0 4px;
+  }
+  .result-title.win{color:var(--gold-bright); text-shadow:0 0 16px rgba(255,204,102,0.5);}
+  .result-title.lose{color:var(--muted);}
+  .result-desc{
+    font-size:13px;
+    color:var(--muted);
+    margin-bottom:18px;
+  }
+
+  .hidden{display:none !important;}
+  footer.note{
+    text-align:center;
+    font-size:11px;
+    color:#3f5b60;
+    margin-top:14px;
+  }
+</style>
+</head>
+<body>
+
+<div class="stage">
+  <header>
+    <span class="eyebrow">にほん電脳横丁</span>
+    <h1>📦 電脳宝箱イベント</h1>
+    <p class="sub" id="header-sub">好きな箱を1つ選んで、宝を探し当てよう</p>
+  </header>
+
+  <!-- Screen 1: Discord ID entry -->
+  <section id="screen-entry">
+    <div class="id-form">
+      <label for="discordInput">Telegram ID</label>
+      <input id="discordInput" type="text" placeholder="例：kintsuba_1992" autocomplete="off" maxlength="32">
+      <p class="id-hint">半角英数字とアンダースコアのみ／先頭は英字／5〜32文字</p>
+      <button class="btn" id="btnEnter">🗺️ 宝箱を探す</button>
+    </div>
+    <p class="status-msg" id="entryMsg"></p>
+  </section>
+
+  <!-- Screen 2: Box selection -->
+  <section id="screen-grid" class="hidden">
+    <p class="discord-tag" id="discordTagLabel"></p>
+    <div class="progress-wrap"><div class="progress-bar" id="progressBar"></div></div>
+    <p class="progress-label" id="progressLabel">0 / 20 埋まっています</p>
+    <div class="grid" id="grid"></div>
+    <p class="status-msg" id="gridMsg">気になる番号をタップして選んでください</p>
+    <button class="btn-open-chest hidden" id="btnOpen">🗝️ 宝箱を開封する ✨</button>
+  </section>
+
+  <!-- Screen 3: Reveal -->
+  <section id="screen-reveal" class="hidden">
+    <div class="chest-wrap" id="chestWrap">
+      <div class="chest-glow" id="chestGlow"></div>
+      <div class="chest-base">
+        <div class="chest-band chest-band-top"></div>
+        <div class="chest-band chest-band-bottom"></div>
+      </div>
+      <div class="chest-lid" id="chestLid"></div>
+      <div class="chest-lock" id="chestLock"><span class="keyhole"></span></div>
+      <div class="burst" id="chestBurst"></div>
+    </div>
+    <div class="result-title hidden" id="resultTitle"></div>
+    <p class="result-desc hidden" id="resultDesc"></p>
+    <button class="btn ghost hidden" id="btnReset">はじめの画面に戻る</button>
+  </section>
+
+  <footer class="note">※先着枠が埋まり次第終了</footer>
+</div>
+
+<script>
+/* =========================================================
+   GASバックエンド設定
+   デプロイ後に発行されたウェブアプリURLをここに設定してください
+   ========================================================= */
+const GAS_URL = 'https://script.google.com/macros/s/AKfycbxJcsJ5W1jQmr_if1wOfIB0LgeA-jR0qR7DalPmf4gVz3IgnZaI_rebrdYsYm0lbn_9/exec';
+
+let myDiscordId = null;
+let pollTimer = null;
+
+/* =========================================================
+   API通信
+   POSTはURLSearchParamsで送信し、CORSプリフライトを回避する
+   ========================================================= */
+async function apiGet(){
+  const url = GAS_URL + '?discordId=' + encodeURIComponent(myDiscordId || '');
+  const res = await fetch(url);
+  return res.json();
+}
+async function apiPost(action, params){
+  const body = new URLSearchParams({ action, discordId: myDiscordId || '', ...params });
+  const res = await fetch(GAS_URL, { method: 'POST', body });
+  return res.json();
+}
+
+/* =========================================================
+   画面制御
+   ========================================================= */
+const screenEntry  = document.getElementById('screen-entry');
+const screenGrid   = document.getElementById('screen-grid');
+const screenReveal = document.getElementById('screen-reveal');
+const headerSub    = document.getElementById('header-sub');
+
+document.getElementById('btnEnter').addEventListener('click', onEnter);
+document.getElementById('discordInput').addEventListener('keydown', e => {
+  if(e.key === 'Enter') onEnter();
+});
+// 入力のたびに半角英数字とアンダースコア以外を除去（全角・記号・絵文字対策）
+document.getElementById('discordInput').addEventListener('input', e => {
+  e.target.value = e.target.value.replace(/[^a-zA-Z0-9_]/g, '');
+});
+
+function onEnter(){
+  const input = document.getElementById('discordInput');
+  const val = input.value.trim();
+  const msg = document.getElementById('entryMsg');
+
+  if(!val){
+    msg.textContent = 'Telegram IDを入力してください';
+    return;
+  }
+  if(!/^[a-zA-Z]/.test(val)){
+    msg.textContent = 'IDは半角英字から始めてください';
+    return;
+  }
+  if(val.length < 5 || val.length > 32){
+    msg.textContent = 'IDは5〜32文字で入力してください';
+    return;
+  }
+  if(/__/.test(val)){
+    msg.textContent = 'アンダースコアを連続で使用することはできません';
+    return;
+  }
+  if(val.endsWith('_')){
+    msg.textContent = 'アンダースコアで終わるIDは使用できません';
+    return;
+  }
+
+  myDiscordId = val;
+  msg.textContent = '';
+  showGridScreen();
+}
+
+function showGridScreen(){
+  screenEntry.classList.add('hidden');
+  screenReveal.classList.add('hidden');
+  screenGrid.classList.remove('hidden');
+  headerSub.textContent = '好きな箱を1つ選んで、宝を探し当てよう';
+  document.getElementById('discordTagLabel').textContent = '@' + myDiscordId;
+  refreshGrid();
+  startPolling();
+}
+
+function startPolling(){
+  stopPolling();
+  pollTimer = setInterval(refreshGrid, 3000);
+}
+function stopPolling(){
+  if(pollTimer){ clearInterval(pollTimer); pollTimer = null; }
+}
+
+async function refreshGrid(){
+  let data;
+  try{
+    data = await apiGet();
+  } catch(err){
+    document.getElementById('gridMsg').textContent = '通信エラーが発生しました。時間をおいて再度お試しください';
+    return;
+  }
+  if(data.error){
+    document.getElementById('gridMsg').textContent = 'サーバー側が未初期化です。運営にお問い合わせください';
+    return;
+  }
+  renderGrid(data);
+}
+
+function renderGrid(data){
+  const grid = document.getElementById('grid');
+  grid.innerHTML = '';
+
+  data.boxes.forEach(box => {
+    const el = document.createElement('div');
+    el.className = 'box';
+    const numSpan = document.createElement('span');
+    numSpan.className = 'num';
+
+    if(box.mine){
+      el.classList.add('mine');
+      numSpan.textContent = '✅';
+    } else if(box.occupied){
+      el.classList.add('taken');
+      numSpan.textContent = '✅';
+    } else {
+      numSpan.textContent = String(box.number).padStart(2, '0');
+      el.addEventListener('click', () => selectBox(box.number));
+    }
+    el.appendChild(numSpan);
+    grid.appendChild(el);
+  });
+
+  const pct = Math.round((data.occupiedCount / data.totalBoxes) * 100);
+  document.getElementById('progressBar').style.width = pct + '%';
+  document.getElementById('progressLabel').textContent = `${data.occupiedCount} / ${data.totalBoxes} 埋まっています`;
+
+  const gridMsg = document.getElementById('gridMsg');
+  const btnOpen = document.getElementById('btnOpen');
+
+  if(data.myBox){
+    const allFilled = data.occupiedCount >= data.totalBoxes;
+    if(allFilled){
+      gridMsg.textContent = '全員選び終わりました！あなたの箱を開封しましょう';
+      btnOpen.classList.remove('hidden');
+      stopPolling();
+    } else {
+      gridMsg.textContent = `あなたは ${String(data.myBox.number).padStart(2,'0')} 番を確保済み。全員揃うと開封できます`;
+      btnOpen.classList.add('hidden');
+    }
+  } else {
+    gridMsg.textContent = '気になる番号をタップして選んでください';
+    btnOpen.classList.add('hidden');
+  }
+}
+
+async function selectBox(number){
+  const gridMsg = document.getElementById('gridMsg');
+
+  let res;
+  try{
+    res = await apiPost('select', { boxNumber: number });
+  } catch(err){
+    gridMsg.textContent = '通信エラーが発生しました。時間をおいて再度お試しください';
+    return;
+  }
+
+  if(res.error === 'ALREADY_SELECTED'){
+    gridMsg.textContent = 'すでに箱を選択済みです';
+  } else if(res.error === 'BOX_TAKEN'){
+    gridMsg.textContent = 'その箱は他の人が選択済みです。別の番号を選んでください';
+  } else if(res.error){
+    gridMsg.textContent = 'エラーが発生しました。時間をおいて再度お試しください';
+  }
+  refreshGrid();
+}
+
+document.getElementById('btnOpen').addEventListener('click', async () => {
+  stopPolling();
+  screenGrid.classList.add('hidden');
+  screenReveal.classList.remove('hidden');
+  headerSub.textContent = '運命の開封タイム';
+
+  let isWin = false;
+  try{
+    const res = await apiPost('open', {});
+    isWin = !!res.isWin;
+  } catch(err){
+    document.getElementById('resultDesc').textContent = '通信エラーが発生しました。時間をおいて再度お試しください';
+  }
+  runOpenSequence(isWin);
+});
+
+/* =========================================================
+   開封演出
+   ========================================================= */
+function runOpenSequence(isWin){
+  const lid = document.getElementById('chestLid');
+  const burst = document.getElementById('chestBurst');
+  const glow = document.getElementById('chestGlow');
+  const resultTitle = document.getElementById('resultTitle');
+  const resultDesc = document.getElementById('resultDesc');
+  const btnReset = document.getElementById('btnReset');
+  const chestWrap = document.getElementById('chestWrap');
+
+  resultTitle.classList.add('hidden');
+  resultDesc.classList.add('hidden');
+  btnReset.classList.add('hidden');
+  lid.classList.remove('open');
+  burst.classList.remove('show');
+  burst.textContent = '';
+  chestWrap.classList.remove('shaking');
+  glow.classList.remove('show');
+
+  // 溜め演出：宝箱が小刻みに震え、光がじわじわ強まる（期待感の演出）
+  setTimeout(() => {
+    chestWrap.classList.add('shaking');
+    glow.classList.add('show');
+  }, 200);
+
+  // 溜めの後、ゆっくりと蓋が開く
+  setTimeout(() => {
+    chestWrap.classList.remove('shaking');
+    lid.classList.add('open');
+
+    // 蓋が開き切ったタイミングで結果を演出
+    setTimeout(() => {
+      if(isWin){
+        burst.textContent = '💰✨';
+        burst.classList.add('show');
+        spawnSparkles(chestWrap, 16);
+        resultTitle.textContent = '🪙 大当たり！';
+        resultTitle.className = 'result-title win';
+        resultDesc.textContent = '宝箱の中にお宝がザクザク見つかりました！運営DMをお待ちください';
+      } else {
+        burst.textContent = '💨';
+        burst.classList.add('show');
+        resultTitle.textContent = '💀 ハズレ...';
+        resultTitle.className = 'result-title lose';
+        resultDesc.textContent = '箱の中は空っぽでした。また次回の宝箱をお楽しみに';
+      }
+      resultTitle.classList.remove('hidden');
+      resultDesc.classList.remove('hidden');
+      btnReset.classList.remove('hidden');
+      glow.classList.remove('show');
+    }, 2600);
+  }, 2000);
+}
+
+function spawnSparkles(container, count){
+  const icons = ['✨','💎','🪙','🔷'];
+  for(let i = 0; i < count; i++){
+    const s = document.createElement('span');
+    s.className = 'sparkle';
+    s.textContent = icons[Math.floor(Math.random() * icons.length)];
+    const angle = Math.random() * Math.PI * 2;
+    const dist = 60 + Math.random() * 70;
+    const x = Math.cos(angle) * dist;
+    const y = Math.sin(angle) * dist - 40;
+    s.style.setProperty('--fly', `translate(${x}px, ${y}px)`);
+    s.style.left = '50%';
+    s.style.top = '35%';
+    s.style.animationDelay = (Math.random() * 0.15) + 's';
+    container.appendChild(s);
+    setTimeout(() => s.classList.add('show'), 10);
+    setTimeout(() => s.remove(), 1300);
+  }
+}
+
+document.getElementById('btnReset').addEventListener('click', () => {
+  location.reload();
+});
+</script>
+</body>
+</html>
