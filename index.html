@@ -242,6 +242,44 @@
     min-height:18px;
     margin-bottom:6px;
   }
+  .lock-overlay{
+    position:fixed;
+    inset:0;
+    background:rgba(9,12,20,0.65);
+    backdrop-filter:blur(2px);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    z-index:500;
+  }
+  .lock-popup{
+    background:linear-gradient(180deg, var(--bg-panel), var(--bg-panel-2));
+    border:1.5px solid var(--panel-border);
+    border-radius:16px;
+    padding:32px 40px;
+    text-align:center;
+    box-shadow:0 20px 50px rgba(0,0,0,0.5), 0 0 30px rgba(77,216,230,0.2);
+    animation:lockPopIn 0.25s ease;
+  }
+  @keyframes lockPopIn{
+    0%{opacity:0; transform:scale(0.85);}
+    100%{opacity:1; transform:scale(1);}
+  }
+  .lock-spinner{
+    font-size:40px;
+    animation:lockSpin 1s ease-in-out infinite;
+  }
+  @keyframes lockSpin{
+    0%,100%{transform:scale(1) rotate(0deg);}
+    50%{transform:scale(1.15) rotate(-8deg);}
+  }
+  .lock-text{
+    margin:14px 0 0;
+    font-family:'Orbitron','Zen Maru Gothic',sans-serif;
+    font-size:14px;
+    color:var(--cyan-bright);
+    letter-spacing:0.05em;
+  }
   .discord-tag{
     font-family:'Orbitron','Zen Maru Gothic',sans-serif;
     text-align:center;
@@ -497,6 +535,13 @@
     <div class="grid" id="grid"></div>
     <p class="status-msg" id="gridMsg">気になる番号をタップして選んでください</p>
     <button class="btn-open-chest hidden" id="btnOpen">🗝️ 宝箱を開封する ✨</button>
+
+    <div class="lock-overlay hidden" id="lockOverlay">
+      <div class="lock-popup">
+        <div class="lock-spinner">📦</div>
+        <p class="lock-text">宝箱を確保中…</p>
+      </div>
+    </div>
   </section>
 
   <!-- Screen 3: Reveal -->
@@ -680,20 +725,24 @@ async function selectBox(number){
 
   const gridMsg = document.getElementById('gridMsg');
   const grid = document.getElementById('grid');
+  const lockOverlay = document.getElementById('lockOverlay');
   grid.classList.add('locked');
-  gridMsg.textContent = '🔒 宝箱を確保中…';
+  lockOverlay.classList.remove('hidden');
   stopPolling();
 
   let res;
   try{
     res = await apiPost('select', { boxNumber: number });
   } catch(err){
+    lockOverlay.classList.add('hidden');
     gridMsg.textContent = '通信エラーが発生しました。時間をおいて再度お試しください';
     grid.classList.remove('locked');
     isSelecting = false;
     startPolling();
     return;
   }
+
+  lockOverlay.classList.add('hidden');
 
   if(res.error === 'ALREADY_SELECTED'){
     gridMsg.textContent = 'すでに箱を選択済みです';
