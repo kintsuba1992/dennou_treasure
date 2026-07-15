@@ -190,6 +190,11 @@
     grid-template-columns:repeat(5, 1fr);
     gap:10px;
     margin:18px 0 10px;
+    transition:opacity 0.2s ease;
+  }
+  .grid.locked{
+    opacity:0.45;
+    pointer-events:none;
   }
   .box{
     aspect-ratio:1/1;
@@ -519,7 +524,7 @@
    GASバックエンド設定
    デプロイ後に発行されたウェブアプリURLをここに設定してください
    ========================================================= */
-const GAS_URL = 'https://script.google.com/macros/s/AKfycbxJcsJ5W1jQmr_if1wOfIB0LgeA-jR0qR7DalPmf4gVz3IgnZaI_rebrdYsYm0lbn_9/exec';
+const GAS_URL = 'PUT_YOUR_DEPLOYED_WEB_APP_URL_HERE';
 
 let myDiscordId = null;
 let pollTimer = null;
@@ -667,14 +672,26 @@ function renderGrid(data){
   }
 }
 
+let isSelecting = false;
+
 async function selectBox(number){
+  if(isSelecting) return;
+  isSelecting = true;
+
   const gridMsg = document.getElementById('gridMsg');
+  const grid = document.getElementById('grid');
+  grid.classList.add('locked');
+  gridMsg.textContent = '🔒 宝箱を確保中…';
+  stopPolling();
 
   let res;
   try{
     res = await apiPost('select', { boxNumber: number });
   } catch(err){
     gridMsg.textContent = '通信エラーが発生しました。時間をおいて再度お試しください';
+    grid.classList.remove('locked');
+    isSelecting = false;
+    startPolling();
     return;
   }
 
@@ -685,7 +702,13 @@ async function selectBox(number){
   } else if(res.error){
     gridMsg.textContent = 'エラーが発生しました。時間をおいて再度お試しください';
   }
-  refreshGrid();
+
+  isSelecting = false;
+  grid.classList.remove('locked');
+  await refreshGrid();
+  if(document.getElementById('btnOpen').classList.contains('hidden')){
+    startPolling();
+  }
 }
 
 document.getElementById('btnOpen').addEventListener('click', async () => {
