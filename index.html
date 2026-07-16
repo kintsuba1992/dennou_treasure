@@ -570,9 +570,9 @@
    デプロイ後に発行されたウェブアプリURLをここに設定してください
    ========================================================= */
 const GAS_URL = 'https://script.google.com/macros/s/AKfycbxJcsJ5W1jQmr_if1wOfIB0LgeA-jR0qR7DalPmf4gVz3IgnZaI_rebrdYsYm0lbn_9/exec';
-
 let myDiscordId = null;
 let pollTimer = null;
+let currentMyBox = null;
 
 /* =========================================================
    API通信
@@ -673,6 +673,7 @@ async function refreshGrid(){
 function renderGrid(data){
   const grid = document.getElementById('grid');
   grid.innerHTML = '';
+  currentMyBox = data.myBox || null;
 
   data.boxes.forEach(box => {
     const el = document.createElement('div');
@@ -688,7 +689,11 @@ function renderGrid(data){
       numSpan.textContent = '✅';
     } else {
       numSpan.textContent = String(box.number).padStart(2, '0');
-      el.addEventListener('click', () => selectBox(box.number));
+      if(!currentMyBox){
+        el.addEventListener('click', () => selectBox(box.number));
+      } else {
+        el.classList.add('taken'); // 確保済みの場合は他の空き箱も選択不可の見た目に
+      }
     }
     el.appendChild(numSpan);
     grid.appendChild(el);
@@ -717,10 +722,27 @@ function renderGrid(data){
   }
 }
 
+function showQuickPopup(icon, text, duration){
+  const overlay = document.getElementById('lockOverlay');
+  const popup = overlay.querySelector('.lock-popup');
+  const originalHTML = popup.innerHTML;
+  popup.innerHTML = `<div class="lock-spinner" style="animation:none;">${icon}</div><p class="lock-text">${text}</p>`;
+  overlay.classList.remove('hidden');
+  setTimeout(() => {
+    overlay.classList.add('hidden');
+    popup.innerHTML = originalHTML;
+  }, duration || 1200);
+}
+
 let isSelecting = false;
 
 async function selectBox(number){
   if(isSelecting) return;
+  if(currentMyBox){
+    // 保険：既に確保済みの場合はサーバーに問い合わせず即座に案内のみ表示
+    showQuickPopup('✅', 'すでに宝箱を確保済みです');
+    return;
+  }
   isSelecting = true;
 
   const gridMsg = document.getElementById('gridMsg');
